@@ -12,3 +12,7 @@
 Log_*.txt
 views/
 obj/
+
+# Local review notes
+DOCUMENT_REVIEW_CHECKLIST.md
+NUGET_RELEASE_REVIEW.md
