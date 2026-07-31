@@ -1,0 +1,94 @@
+{
+	"version": "3.2.3-preview",
+	"config_version": 1,
+	"isHideNavbar": false,
+	"widgetList": [
+		{
+			"widgetComponentName": "LabelStatus",
+			"ref": "0",
+			"widgetConfig": {
+				"edit": {
+					"type": "",
+					"composition": "widget-container-vertical",
+					"style": "normal",
+					"parseUrl": "http://localhost:8002/ExampleThing/getnum",
+					"url": "",
+					"isSubscribe": false,
+					"isShowStateVlaue": false,
+					"interval": "1",
+					"tooltip": {
+						"isShow": false,
+						"iconSize": "22",
+						"value": "",
+						"fontSize": "22",
+						"position": "right"
+					},
+					"confirmDialog": {
+						"isShow": false
+					},
+					"isHide": false
+				},
+				"props": {
+					"title": "LabelStatus",
+					"titleSize": "22",
+					"textSize": "22",
+					"unit": "",
+					"EventType": "DataPublish"
+				},
+				"params": {
+					"PokedPath": "",
+					"Args": {
+						"variables": {},
+						"target": [
+							"self"
+						]
+					},
+					"setLabel": ""
+				},
+				"extra": {
+					"picture": null,
+					"monitor": null
+				},
+				"css": {
+					"style": "",
+					"containerClasses": "",
+					"contentClasses": "",
+					"coreClasses": "",
+					"titleClasses": "",
+					"textClasses": ""
+				},
+				"config": {
+					"WidgetComponentName": "LabelStatus",
+					"data": {
+						"url": "",
+						"get": {
+							"url": "http://localhost:8002/ExampleThing/getnum",
+							"userInputData": ""
+						},
+						"set": {
+							"url": "http://localhost:8002/ExampleThing/getnum",
+							"userInputData": ""
+						}
+					}
+				}
+			},
+			"x": 0,
+			"y": 0,
+			"w": 8,
+			"h": 6,
+			"i": 0,
+			"height": "142",
+			"width": "540",
+			"moved": false
+		}
+	],
+	"gridLayoutConfig": {
+		"colNum": 30,
+		"rowHeight": 22,
+		"margin": 2,
+		"isLockScreen": false,
+		"backgroundUrl": "",
+		"backgroundWidth": "",
+		"backgroundHeight": ""
+	}
+}
