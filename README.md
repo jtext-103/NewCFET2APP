@@ -21,6 +21,10 @@ CFET2 的宿主应用与交互式命令行。它初始化 `CFET2Host`、挂载 T
 3. 确认启动工作目录中已准备 `GlobalConfig.json`、`thingConfig` 和按需提供的 `thingDll`。
 4. 使用 F5 启动并调试。
 
+### 无交互启动
+
+在包含运行配置的目录执行 `CFET2APP.exe --no-cli`，即可启动通信模块和 Thing 并持续运行，不进入交互式 CLI，适合容器和后台宿主。该分支持续等待，退出由外部进程管理负责。
+
 ### 运行已编译程序
 
 从包含运行配置的输出目录直接启动 `CFET2APP.exe`；例如：
@@ -54,6 +58,20 @@ cd .\CFET2APP\bin\Debug\net10.0
 - `Accept` 会传给 HTTP 通信模块，决定其接受的数据格式。
 - WebSocket 通信模块使用 `IP` 与 `Port + 1` 建立服务地址。
 - `LogRetentionDays` 控制按日期生成的日志文件保留天数；未提供、为空或非法时默认保留 7 天，设为 `0` 时不启动日志清理任务。
+- `ResourceObservationIntervalMs` 设置未标记 `[Cfet2Event]` 的标量资源自动观测周期（毫秒）。正整数生效；未提供、为空、非整数或不大于 0 时使用默认 500 ms。启动时先加载配置，再创建 Hub；修改配置后需重启，不支持自动热更新。
+
+### WebSocket 重订阅与并发配置
+
+`GlobalConfig.json` 可设置 `WebSocketResubscribeIntervalMs`，控制重连恢复时相邻订阅发送的间隔。APP 默认 10 ms；0 表示不额外等待；缺失、空、负数或非整数回退到 10 ms。APP 会将该值传给模块的 `ResubscribeInterval`；直接使用模块而不覆盖该选项时默认是 50 ms。
+
+启动前还可设置以下环境变量，只有正整数生效，其余值保留模块默认值：
+
+| 环境变量 | 对应选项 | 模块默认值 |
+| --- | --- | --- |
+| `CFET2_WEBSOCKET_MAX_CONCURRENT_FAN_OUT_EVENTS` | `MaxConcurrentFanOutEvents` | `Math.Max(1, Environment.ProcessorCount)` |
+| `CFET2_WEBSOCKET_MAX_FAN_OUT_CONCURRENCY` | `MaxFanOutConcurrency` | `Math.Max(1, Environment.ProcessorCount * 2)` |
+
+APP 默认挂载 `/WebSocketCM` 诊断 Thing，例如 `get /WebSocketCM/status`、`get /WebSocketCM/remoteClients`。总览包含 Pending/Active/Failed 订阅计数；模块的 `Started` 状态仅表示生命周期已启动，不代表所有远程订阅已成功。
 
 ### 日志
 
@@ -115,6 +133,8 @@ thingConfig/
 
 - [如何做一个 CFET Thing](HowToMakeCfetThings.md) 提供 Thing 开发参考。
 ## 文档
+
+- [提交与依赖交付说明](Doc/提交与依赖交付说明.md)
 
 - [新命令行交互功能](<Doc/newcfet2app 新命令行交互功能.md>)
 - [升级内容](<Doc/newcet2app 升级内容.md>)

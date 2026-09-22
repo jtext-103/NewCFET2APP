@@ -1,10 +1,20 @@
 # newcfet2app 升级内容
 
+## 本轮实现补充（2026-09-21）
+
+- 新增 `--no-cli`，在通信模块和 Thing 启动后持续运行，不进入 CLI。
+- `GlobalConfig.json` 在 Hub 创建前加载，确保 `ResourceObservationIntervalMs` 生效。
+- APP 通过 `WebSocketCommunicationOptions` 配置模块，传入 `WebSocketResubscribeIntervalMs`（默认 10 ms，允许 0）。
+- 支持 `CFET2_WEBSOCKET_MAX_CONCURRENT_FAN_OUT_EVENTS` 和 `CFET2_WEBSOCKET_MAX_FAN_OUT_CONCURRENCY` 两个正整数环境变量。
+- 默认挂载 `/WebSocketCM`，提供连接和订阅诊断。
+- ExampleThing 使用资源订阅与 `PublishResource(GetPathFor(nameof(...)), value)`；完整的自动观测和主动发布示例见 [Thing 开发指南](../HowToMakeCfetThings.md#事件与资源订阅)。
+- 运行配置和日志边界以 [README](../README.md) 为准。
+
 ## 1. 文档说明
 
 本文档整理当前 `newcfet2app` 相比旧版 `jtext103_cfet2app` 的主要升级内容，包括运行框架、通信模块、控制台交互、动态 DLL 加载、NuGet 依赖和跨平台能力等方面。
 
-当前项目处于开发阶段，CFET2Core、HTTPCommunicationModule 和 WebSocketCommunicationModule 暂时通过源码项目引用参与联调。源码项目引用与 NuGet 包引用属于开发和发布方式差异，不作为本次功能升级内容。
+当前已移除跨仓库源码项目引用，恢复为固定版本 NuGet 引用，等待按 Core → HTTP/WebSocket → APP 顺序逐个发布并更新依赖。Core 引用为 3.1.0，HTTP/WebSocket 引用均已升级为已发布的 NuGet 1.0.1。详见 [提交与依赖交付说明](提交与依赖交付说明.md)。
 
 ## 2. 升级内容概览
 
@@ -353,7 +363,7 @@ return availableBytes / (1024f * 1024f);
 
 ## 10. 日志配置升级
 
-当前版本新增 `appsettings.json`，用于配置日志级别和 NLog 控制台输出。
+当前版本新增 `appsettings.json`，其 `Logging:LogLevel` 用于配置 HTTP/WebSocket 服务的 ASP.NET Core 日志筛选。CFET 日志由 `NlogProvider.Config()` 代码配置：文件记录 Debug 及以上、控制台输出 Warn 及以上，当前不读取 `appsettings.json` 中的 NLog 节。
 
 项目文件中配置了：
 
@@ -364,7 +374,7 @@ return availableBytes / (1024f * 1024f);
 </None>
 ```
 
-因此，`appsettings.json` 会自动复制到构建和发布目录，日志行为可以通过配置文件调整。
+因此，`appsettings.json` 会自动复制到构建和发布目录；其中的 Logging 设置影响 ASP.NET Core 日志。CFET 日志保留天数由 `GlobalConfig.json` 的 `LogRetentionDays` 控制。
 
 ## 11. 发布配置升级
 
@@ -412,7 +422,7 @@ dotnet publish \
 1. 部分 EventHub 和 Hub 资源访问 API 已被标记为过时，后续需要逐步迁移到新版 Core API。
 2. `FakeAI` 示例仍调用 `Thread.Abort()`；该 API 在现代 .NET 中不受支持，执行时可能抛出 `PlatformNotSupportedException`。
 3. 动态 DLL 加载尚未实现程序集隔离、运行时卸载和真正的热更新。
-4. 部分旧版 README 内容仍描述 `net461`、`net6.0` 和 Nancy，需要继续更新。
+4. `Expired` 中的旧版 README 保留历史框架和 Nancy 说明；当前使用方式以仓库根 README 为准。
 5. 应避免将 `bin`、`obj`、日志和临时构建产物提交到版本库。
 
 ## 14. 升级总结

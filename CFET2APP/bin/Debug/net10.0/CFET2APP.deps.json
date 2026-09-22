@@ -11,13 +11,16 @@
           "Autofac": "9.1.0",
           "CFET2Core": "3.0.0",
           "ExampleThing": "1.0.0",
-          "HTTPCommunicationModule": "1.0.0",
+          "Jtext103.CFET2.HTTPCommunicationModule": "1.0.0",
+          "Jtext103.CFET2.WebSocketCommunicationModule": "1.0.0",
+          "MessagePack": "3.1.8",
           "Microsoft.CodeAnalysis.CSharp": "5.3.0",
           "NLog": "6.1.3",
           "Newtonsoft.Json": "13.0.4",
           "ReadLine": "2.0.1",
           "System.CommandLine": "2.0.8",
-          "WebSocketCommunicationModule": "1.0.0"
+          "HTTPCommunicationModule": "1.0.0.0",
+          "WebSocketCommunicationModule": "1.0.0.0"
         },
         "runtime": {
           "CFET2APP.dll": {}
@@ -31,23 +34,23 @@
           }
         }
       },
-      "MessagePack/3.1.6": {
+      "MessagePack/3.1.8": {
         "dependencies": {
-          "MessagePack.Annotations": "3.1.6",
+          "MessagePack.Annotations": "3.1.8",
           "Microsoft.NET.StringTools": "17.11.4"
         },
         "runtime": {
           "lib/net9.0/MessagePack.dll": {
-            "assemblyVersion": "3.1.6.0",
-            "fileVersion": "3.1.6.0"
+            "assemblyVersion": "3.1.8.0",
+            "fileVersion": "3.1.8.0"
           }
         }
       },
-      "MessagePack.Annotations/3.1.6": {
+      "MessagePack.Annotations/3.1.8": {
         "runtime": {
           "lib/netstandard2.0/MessagePack.Annotations.dll": {
-            "assemblyVersion": "3.1.6.0",
-            "fileVersion": "3.1.6.0"
+            "assemblyVersion": "3.1.8.0",
+            "fileVersion": "3.1.8.0"
           }
         }
       },
@@ -257,10 +260,10 @@
           }
         }
       },
-      "HTTPCommunicationModule/1.0.0": {
+      "Jtext103.CFET2.HTTPCommunicationModule/1.0.0": {
         "dependencies": {
           "CFET2Core": "3.0.0",
-          "MessagePack": "3.1.6",
+          "MessagePack": "3.1.8",
           "Newtonsoft.Json": "13.0.4"
         },
         "runtime": {
@@ -270,11 +273,27 @@
           }
         }
       },
-      "WebSocketCommunicationModule/1.0.0": {
+      "Jtext103.CFET2.WebSocketCommunicationModule/1.0.0": {
         "dependencies": {
           "CFET2Core": "3.0.0",
           "Newtonsoft.Json": "13.0.4"
         },
+        "runtime": {
+          "WebSocketCommunicationModule.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "HTTPCommunicationModule/1.0.0.0": {
+        "runtime": {
+          "HTTPCommunicationModule.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "WebSocketCommunicationModule/1.0.0.0": {
         "runtime": {
           "WebSocketCommunicationModule.dll": {
             "assemblyVersion": "1.0.0.0",
@@ -297,19 +316,19 @@
       "path": "autofac/9.1.0",
       "hashPath": "autofac.9.1.0.nupkg.sha512"
     },
-    "MessagePack/3.1.6": {
+    "MessagePack/3.1.8": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-c5M8C0Lrf6GdGiv01OCB86WEL5YDi7UdH5qsU+q7Q9WvqlhtE4kkJzzJpFufPbz+OULX8FGIB2qo/7CLQ6vizg==",
-      "path": "messagepack/3.1.6",
-      "hashPath": "messagepack.3.1.6.nupkg.sha512"
+      "sha512": "sha512-Qk2q+9FVxnMSp+NQ9y3SLz3HqWe7Rg3KRMHhBX28FkKUoOeP9YIU86mA4pFOxDDjUIRA9e7Ssbxs/LwWUcAzPw==",
+      "path": "messagepack/3.1.8",
+      "hashPath": "messagepack.3.1.8.nupkg.sha512"
     },
-    "MessagePack.Annotations/3.1.6": {
+    "MessagePack.Annotations/3.1.8": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-d0r/B7v1frvN6ElIgp5J5/cHeLADOK21qieHutimUpCWGcjhzOJV9glrItZO4E3dUcriMKX3Swsee3rFx9ouOw==",
-      "path": "messagepack.annotations/3.1.6",
-      "hashPath": "messagepack.annotations.3.1.6.nupkg.sha512"
+      "sha512": "sha512-SitOtZ4tOlAZZPF7p52M7143F+Cuz7o/aU0MrtAXX0+ZkPXzDNroOFhzzE2ogMFThsoEW/E6akXVVcBFM9ZKaw==",
+      "path": "messagepack.annotations/3.1.8",
+      "hashPath": "messagepack.annotations.3.1.8.nupkg.sha512"
     },
     "Microsoft.CodeAnalysis.Common/5.3.0": {
       "type": "package",
@@ -370,13 +389,23 @@
       "serviceable": false,
       "sha512": ""
     },
-    "HTTPCommunicationModule/1.0.0": {
+    "Jtext103.CFET2.HTTPCommunicationModule/1.0.0": {
       "type": "project",
       "serviceable": false,
       "sha512": ""
     },
-    "WebSocketCommunicationModule/1.0.0": {
+    "Jtext103.CFET2.WebSocketCommunicationModule/1.0.0": {
       "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "HTTPCommunicationModule/1.0.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "WebSocketCommunicationModule/1.0.0.0": {
+      "type": "reference",
       "serviceable": false,
       "sha512": ""
     }

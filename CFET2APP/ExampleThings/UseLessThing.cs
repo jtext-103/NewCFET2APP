@@ -31,7 +31,7 @@ namespace Jtext103.CFET2.CFET2App.ExampleThings
                 {
                     _base = value;
                     //exsample of publis event
-                    MyHub.EventHub.Publish(GetPathFor("Base"), "changed", _base);
+                    MyHub.PublishResource(GetPathFor("Base"), _base);
                 }
             }
         }

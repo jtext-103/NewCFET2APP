@@ -11,9 +11,9 @@ Thing 是继承 `Jtext103.CFET2.Core.Thing` 的 .NET 类。挂载到 Hub 后，�
 - `Config`：可读写资源，对应 `get` 和 `set`。
 - `Method`：可执行资源，对应 `invoke`。
 
-资源路径由 Thing 挂载路径和资源名组成。将名为 `ExampleThing` 的 Thing 挂载在 `/` 后，`getnum` Status 的路径为 `/ExampleThing/getnum`。
+资源路径由 Thing 挂载路径和资源名组成。当前 `ExampleThing.getnum()` 声明了 `[Cfet2Status("getnuma")]`，将 Thing 挂载为 `/ExampleThing` 后，其资源路径是 `/ExampleThing/getnuma`。Thing 内部使用 `GetPathFor(nameof(getnum))` 可获得这个路径；`nameof` 使用 C# 成员名，`GetPathFor` 负责解析特性中的对外名称。
 
-当前 `AccessAction` 只有 `get`、`set`、`invoke`。事件没有独立的 `subscribe` HTTP action 或 `[CFET2Event]` 特性；但 Thing 可以把订阅、取消订阅和发布封装为 `Cfet2Method`，从而通过 HTTP 的 `PUT` 调用作为第四类对外能力使用。事件消息仍由 EventHub（远程场景由 WebSocket 通信模块）分发。
+当前 `AccessAction` 只有 `get`、`set`、`invoke`，资源订阅不作为 HTTP action 暴露。事件订阅通过 Hub API 建立，事件消息由事件系统分发，远程场景由 WebSocket 通信模块传输。`[Cfet2Event]` 用于标识 Status/Config 资源支持原生事件：带该标记时由 Thing 主动发布事件，未带该标记时可由 Core 内部观测资源变化。
 
 ## 创建 Thing
 
@@ -162,52 +162,161 @@ Content-Type: application/json
 
 HTTP 模块会将 `GET` 映射为 `get`、`POST` 映射为 `set`、`PUT` 映射为 `invoke`。对不匹配的资源类型执行操作会得到错误结果。
 
-## 事件：作为可远程控制的第四类能力
+## 事件与资源订阅
 
-Thing 可以调用 `MyHub.EventHub.Publish(path, eventType, sample)` 发布事件。事件源使用路径和事件类型标识；`ExampleThing.publish()` 发布 `changed` 事件到 `/ExampleThing/getnum`：
+### 如何选择事件发布方式
+
+| 资源声明 | 谁发布变化事件 | Thing 需要做什么 |
+| --- | --- | --- |
+| Status/Config 未标记 `[Cfet2Event]` | 建立资源订阅后，Core 周期读取并在值变化时自动发布 `changed` | 提供可读取的标量值，无需调用 Publish |
+| Status/Config 标记 `[Cfet2Event]` | Thing 在数据更新处主动发布 | 更新值后调用 `MyHub.PublishResource(GetPathFor(nameof(资源成员)), value)` |
+
+`[Cfet2Event]` 只是原生事件能力标识。它不会自动监听属性赋值，也不会自动插入 Publish；标记后 Core 不再轮询该资源。如果希望写入 Config 或采集到新值时立即发布，应在 setter 或采集回调中显式发布。
+
+### 方式一：Core 自动观测并发布事件
+
+下面是完整的 Thing 示例。`Target` 没有 `[Cfet2Event]`，因此资源订阅建立后，Core 会自动检测其变化。
 
 ```csharp
-[Cfet2Method]
-public void publish()
+using Jtext103.CFET2.Core;
+using Jtext103.CFET2.Core.Attributes;
+
+public sealed class ObservedMeterThing : Thing
 {
-    MyHub.EventHub.Publish("/ExampleThing/getnum", "changed", 1);
+    [Cfet2Config(Name = "target")]
+    public int Target { get; set; }
+
+    [Cfet2Method]
+    public void UpdateTarget(int value)
+    {
+        Target = value; // 无需手动 Publish，Core 在下一次观测到变化时发布。
+    }
 }
 ```
 
-订阅、取消订阅同样可以封装为 Method。`ExampleThing` 在启动时以及 `SubScribe()` 中订阅配置好的远程事件路径，并在 `unSubscribe()` 中释放返回的 `Token`：
+在宿主或已启动的 Thing 中建立订阅：
 
 ```csharp
-private Token subToken;
-private readonly string remoteSubUri = "http://localhost:8002/ExampleThing/getnum";
+var meter = new ObservedMeterThing();
+MyHub.TryAddThing(meter, "/device", "meter");
 
-[Cfet2Method]
-public void SubScribe()
-{
-    subToken = MyHub.EventHub.Subscribe(
-        new EventFilter(remoteSubUri, "changed"),
-        eventHandler);
-}
+// nameof 返回 "Target"，GetPathFor 解析 Name="target" 和实际挂载路径。
+var subscription = MyHub.SubscribeResource(
+    meter.GetPathFor(nameof(ObservedMeterThing.Target)),
+    e => System.Console.WriteLine($"changed: {e.Sample.ObjectVal}"));
 
-[Cfet2Method]
-public void unSubscribe()
+System.Console.WriteLine($"initial: {subscription.InitialValue.ObjectVal}");
+meter.UpdateTarget(42);
+
+// 保持 subscription 存活以继续接收事件；不再使用时执行：
+// subscription.Dispose();
+```
+
+此处路径为 `/device/meter/target`。Core 先读取当前值作为 `InitialValue`，之后默认每 500 ms 观测一次，以 `object.Equals` 判断值是否变化。同一资源的多个订阅共享观测任务；最后一个订阅释放后停止观测。只有声明资源而没有资源订阅时，不会自动启动观测。
+
+APP 可在启动目录的 `GlobalConfig.json` 中设置 `ResourceObservationIntervalMs`，正整数生效，缺失或非法时使用 500 ms。配置须在创建 Hub 前加载，修改后重启。轮询可能漏掉两次采样之间的短暂变化，浮点值没有容差或死区。
+
+自动观测支持数值、`bool`、`char`、`string`、枚举、`DateTime`、`DateTimeOffset`、`TimeSpan`、`Guid`，以及这些值类型的 `Nullable<T>`。`Status<T>`、`Config<T>`、`SampleBase<T>` 及其派生类按 `T` 判断。数组、集合、自定义类/结构体、声明为 `object` 或非泛型 `ISample` 的资源不能自动观测，订阅时抛出 `WrongResourceActionException`；普通 Get/Set 不受影响。Method 不支持资源订阅，未标记资源仅支持 `changed` 事件。
+
+### 方式二：在值更新时主动发布，使用 nameof 定位资源
+
+下面同时演示 Status 采集更新和 Config setter 发布。两个资源都标记 `[Cfet2Event]`，不会再被 Core 周期观测。
+
+```csharp
+using Jtext103.CFET2.Core;
+using Jtext103.CFET2.Core.Attributes;
+
+public sealed class NativeMeterThing : Thing
 {
-    MyHub.EventHub.Unsubscribe(subToken);
+    private double temperature;
+    private int target;
+
+    [Cfet2Event]
+    [Cfet2Status(Name = "temperature")]
+    public double Temperature => temperature;
+
+    [Cfet2Method]
+    public void UpdateTemperature(double value)
+    {
+        if (temperature.Equals(value)) return;
+        temperature = value;
+        MyHub.PublishResource(GetPathFor(nameof(Temperature)), value);
+    }
+
+    [Cfet2Event]
+    [Cfet2Config(Name = "target")]
+    public int Target
+    {
+        get => target;
+        set
+        {
+            if (target == value) return;
+            target = value;
+            MyHub.PublishResource(GetPathFor(nameof(Target)), value);
+        }
+    }
 }
 ```
 
-由于这三个成员是 Method，它们可通过 HTTP 资源调用：
+挂载为 `/device/meter` 后，`GetPathFor(nameof(Temperature))` 得到 `/device/meter/temperature`，`GetPathFor(nameof(Target))` 得到 `/device/meter/target`。先更新资源值，再发布，订阅回调通过 `EventArg.Sample` 读取推送值，默认事件类型为 `changed`。
 
-| 目的 | HTTP 调用 |
-| --- | --- |
-| 发布事件 | `PUT /ExampleThing/publish` |
-| 建立订阅 | `PUT /ExampleThing/SubScribe` |
-| 取消订阅 | `PUT /ExampleThing/unSubscribe` |
+`nameof(Temperature)` 本身只返回 C# 成员名 `Temperature`；应把它交给 `GetPathFor`，不要直接作为发布路径。这样修改成员名时可由编译器检查，同一 Thing 多实例挂载时也能使用各自路径。仅在 Thing 已挂载、Hub 已注入后执行发布；构造函数中不要发布，上例 setter 也不要用于构造阶段的初始化。业务若有多个并发更新来源，应自行保证更新与发布的顺序。
 
-HTTP 在这里用于访问 Thing 暴露的控制资源；订阅建立后的事件消息不在该 HTTP 请求中持续返回，而是由 `EventHub` 分发。本地订阅直接路由到回调；远程订阅需要已注册的 WebSocket 通信模块，由它建立远程订阅并回传事件。
+Get/Set 分开声明为方法时，同样使用实际成员名：
 
-`EventHub.Subscribe(EventFilter, Action<EventArg>)` 当前带有 `[Obsolete]` 标记，但 `ExampleThing` 和现有 WebSocket 通信模块仍使用并实现这一接口。调用方必须保存返回的 `Token`，并在不再需要时执行 `Unsubscribe(token)`；重复订阅前也应先确认旧 Token 是否已释放。
+```csharp
+private int setPoint;
 
-当前尚未实现的是独立的资源级 `Subscribe` action、`[CFET2Event]` 特性和自动内部观测。它们不影响以上通过 Method 控制 `EventHub` 发布、订阅和取消订阅的现有模式。
+[Cfet2Config(ConfigAction.Get, Name = "setPoint")]
+public int ReadSetPoint() => setPoint;
+
+[Cfet2Event]
+[Cfet2Config(ConfigAction.Set, Name = "setPoint")]
+public void WriteSetPoint(int value)
+{
+    if (setPoint == value) return;
+    setPoint = value;
+    MyHub.PublishResource(GetPathFor(nameof(WriteSetPoint)), value);
+}
+```
+
+`GetPathFor(nameof(WriteSetPoint))` 会解析为当前 Thing 路径下的 `setPoint`，而不是 `WriteSetPoint`。分开的 Config 方法必须把 `[Cfet2Event]` 放在 Set 实现上；只标记 Get 实现会在资源探测时被拒绝。属性形式则直接标记可读写的 Config 属性。
+
+上例自行跳过相同值，表示“变化时发布”；`PublishResource` 本身不会去重。复杂对象也可走原生事件，但应发布稳定快照，不要在发布后继续原地修改同一实例。没有原生标记的资源若又手动发布，可能与自动观测产生重复通知，应按上表选择一种方式。
+
+### 订阅、初始值与取消
+
+资源订阅使用 `MyHub.SubscribeResource(...)`，返回 `ResourceSubscription`。调用方保存订阅对象，读取 `InitialValue`，不再使用时调用 `Dispose()`；也可保存其 `Token` 并调用 `MyHub.Unsubscribe(token)`。重复订阅前先释放旧订阅，避免遗留回调。
+
+远程示例（在持有 `MyHub` 的宿主或 Thing 中执行）：
+
+```csharp
+var subscription = MyHub.SubscribeResource(
+    "http://localhost:8002/ExampleThing/setNum",
+    e => System.Console.WriteLine(e.Sample.ObjectVal));
+
+System.Console.WriteLine(subscription.InitialValue.ObjectVal);
+// 不再使用时：subscription.Dispose();
+```
+
+初始 Get 失败、返回 null 或 invalid sample 时会抛错，不建立后续订阅。远程资源需要同时注册资源通信模块和事件通信模块：HTTP 负责初始 Get，WebSocket 负责事件传输。远程调用返回表示初始 Get 和本地订阅注册完成，并不等待远端成功 ACK；之后仍可能收到拒绝 ACK，应查看 WebSocket 的 Pending/Active/Failed 状态、LastError 和日志。
+
+初始 Get 与事件订阅不是一个原子操作，不保证覆盖两者之间的每次变化；断线期间的事件也不补发。应按业务需要决定是否重新读取当前值。
+
+当前 `ExampleThing` 的实际演示为：
+
+- `getnum()` 对外名为 `getnuma`，未标记原生事件，可通过资源订阅自动观测。
+- `setNum`、`setNum2` 在 Set 方法中标记 `[Cfet2Event]`，写入后使用 `GetPathFor(nameof(setNum))` 等发布；当前示例每次写入都会发布，没有相同值过滤。
+- `SubScribe()` 订阅远端 `setNum` 和 `setNum2`；`Start()` 中未自动调用它，需要显式触发。
+- `publish()` 手动发布到 `getnuma`，与 `SubScribe()` 订阅的两个 Config 是不同资源，不能用它验证这两个 Config 的回调。
+
+这些 Method 可分别通过 `PUT /ExampleThing/SubScribe`、`PUT /ExampleThing/unSubscribe`、`PUT /ExampleThing/publish` 调用。HTTP 只负责触发控制方法，事件不会在该请求中持续返回。
+
+### 普通事件
+
+非资源事件使用 `MyHub.Publish(path, eventType, sample)` 和 `MyHub.Subscribe(new EventFilter(path, eventType), handler)`，取消使用 `MyHub.Unsubscribe(token)`。普通事件订阅不会为本地资源启动自动观测；需要资源初始值和自动观测时使用 `SubscribeResource`。
+
+`EventHub.Subscribe(...)`、`EventHub.Publish(...)` 已标记 `[Obsolete]`，新业务代码优先使用上述 Hub API。资源订阅不加入 `AccessAction`，也不是 HTTP get/set/invoke 的一种。
 
 ## 挂载 Thing
 

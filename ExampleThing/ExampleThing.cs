@@ -14,6 +14,7 @@ namespace Jtext103.CFET2.Things.ExampleThing
     public class ExampleThing : Thing
     {
         private float num = 0;
+        private float num2 = 0;
         private ExampleThingConfig myConfig;
 
         // 复写两个函数，这这里完全一些初始化和起始工作
@@ -28,13 +29,16 @@ namespace Jtext103.CFET2.Things.ExampleThing
         Token subToken1;
         Token subToken2;
         // http://localhost:8002
-        string subUri = "/ExampleThing/getnum";
-        string remoteSubUri = "http://localhost:8002/ExampleThing/getnum";
+        string subUri = "/ExampleThing/setnum";
+        string remoteSubUri = "http://localhost:8002/ExampleThing/setnum";
+        string remoteSubUri2 = "http://localhost:8002/ExampleThing/setnum2";
+
         public override void Start()
         {
             // CFET中有事件的发布订阅，用法如下
-            subToken2 = MyHub.EventHub.Subscribe(new EventFilter(remoteSubUri, "changed"), eventHandler);
-            // MyHub.EventHub.Publish("/idtest/" + channel.ToString(), EventFilter.DefaultEventType, id);
+            //subToken2 = MyHub.EventHub.Subscribe(new EventFilter(remoteSubUri, "changed"), eventHandler);
+            // MyHub.Publish("/idtest/" + channel.ToString(), EventFilter.DefaultEventType, id);
+            //SubScribe();
         }
 
         private void eventHandler(EventArg arg)
@@ -46,7 +50,7 @@ namespace Jtext103.CFET2.Things.ExampleThing
         // 通过以下方式最终会暴露成CR，通过http可以被外界访问
 
         // 这是STATUS，只能读
-        [Cfet2Status]
+        [Cfet2Status("getnuma")]
         public float getnum()
         {
             Random random = new Random();
@@ -62,10 +66,26 @@ namespace Jtext103.CFET2.Things.ExampleThing
             return num;
         }
 
+        [Cfet2Event]
         [Cfet2Config(ConfigActions = ConfigAction.Set, Name = "setNum")]
         public void setNum(float x, float y)
         {
             num = y;
+            MyHub.PublishResource(GetPathFor(nameof(setNum)),num);
+        }
+
+        [Cfet2Config(ConfigActions = ConfigAction.Get, Name = "setNum2")]
+        public float getNum2()
+        {
+            return num2;
+        }
+
+        [Cfet2Event]
+        [Cfet2Config(ConfigActions = ConfigAction.Set, Name = "setNum2")]
+        public void setNum2(float x, float y)
+        {
+            num2 = y;
+            MyHub.PublishResource(GetPathFor(nameof(setNum2)), num2);
         }
 
         // method
@@ -79,19 +99,24 @@ namespace Jtext103.CFET2.Things.ExampleThing
         [Cfet2Method]
         public void publish()
         {
-            MyHub.EventHub.Publish("/ExampleThing/getnum", "changed", 1);
+            MyHub.PublishResource(GetPathFor(nameof(getnum)), 1);
         }
 
         [Cfet2Method]
         public void unSubscribe()
         {
-            MyHub.EventHub.Unsubscribe(subToken2);
+            MyHub.Unsubscribe(subToken2);
+            MyHub.Unsubscribe(subToken1);
         }
 
         [Cfet2Method]
         public void SubScribe()
         {
-            subToken2 = MyHub.EventHub.Subscribe(new EventFilter(remoteSubUri, "changed"), eventHandler);
+            var resourceSubscription = MyHub.SubscribeResource(remoteSubUri, eventHandler);
+            var resourceSubscription2 = MyHub.SubscribeResource(remoteSubUri2, eventHandler);
+
+            subToken2 = resourceSubscription.Token;
+            subToken1 = resourceSubscription2.Token;
         }
     }
 }

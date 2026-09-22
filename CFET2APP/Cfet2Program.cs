@@ -1,5 +1,6 @@
 ﻿using Jtext103.CFET2.CFET2App.cli;
 using Jtext103.CFET2.Core;
+using Jtext103.CFET2.Core.Config;
 using Jtext103.CFET2.Core.Log;
 using System;
 
@@ -13,6 +14,9 @@ namespace Jtext103.CFET2.CFET2App
             NlogProvider.Config();
             Cfet2LogManager.SetLogProvider(new NlogProvider());
 
+            // Load settings before Hub/EventHub construction captures the observation interval.
+            GlobalConfig.Populate("./GlobalConfig.json");
+
             //inject and init the host app module
             var host = new Cfet2Program();
             HubMaster.InjectHubToModule(host);
@@ -20,7 +24,7 @@ namespace Jtext103.CFET2.CFET2App
             //add things, which defined in xxPartial.cs
             host.AddThings();
 
-            //after addthings populate global config,start log clean
+            // Start cleanup after configuration and component registration.
             Cfet2LogManager.StartLogCleanup();
 
             //start communication modules
@@ -29,6 +33,12 @@ namespace Jtext103.CFET2.CFET2App
             //start all thins
             host.MyHub.StartThings();
 
+            if (Array.Exists(args, arg => string.Equals(arg, "--no-cli", StringComparison.OrdinalIgnoreCase)))
+            {
+                Console.WriteLine("Cfet2 host running without CLI");
+                System.Threading.Thread.Sleep(System.Threading.Timeout.Infinite);
+                return;
+            }
 
             //start cli loop 
             var cli = new CliParser(host);

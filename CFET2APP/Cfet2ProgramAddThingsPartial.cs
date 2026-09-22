@@ -5,6 +5,8 @@ using Jtext103.CFET2.CFET2App.DynamicLoad;
 using Jtext103.CFET2.Core.Config;
 using Jtext103.CFET2.HTTPCommunicationModule;
 using Jtext103.CFET2.WebSocketCommunicationModule;
+using Jtext103.CFET2.WebSocketCommunicationModule.Diagnostics;
+using Jtext103.CFET2.WebSocketCommunicationModule.Options;
 using System;
 // using Jtext103.CFET2.Things.ExampleThing;
 
@@ -17,8 +19,6 @@ namespace Jtext103.CFET2.CFET2App
             //------------------------------Pipeline------------------------------//
             MyHub.Pipeline.AddMiddleware(new ResourceInfoMidware());
             MyHub.Pipeline.AddMiddleware(new NavigationMidware());
-
-            GlobalConfig.Populate("./GlobalConfig.json");
 
             //------------------------------HTTP通信模块------------------------------//
             var httpCM = new HTTPCommunicationModule.HTTPCommunicationModule(GlobalConfig.HostUri, GlobalConfig.Accept);
@@ -36,8 +36,16 @@ namespace Jtext103.CFET2.CFET2App
             //Console.WriteLine(GlobalConfig.IP);
             //Console.WriteLine(GlobalConfig.IP + ":" + (int.Parse(GlobalConfig.Port) + 1));
             Uri webSocketUri = new Uri(GlobalConfig.IP + ":" + (int.Parse(GlobalConfig.Port) + 1));
-            var remoteHub = new WebSocketCommunicationModule.WebSocketCommunicationModule(webSocketUri);
+            var webSocketOptions = new WebSocketCommunicationOptions
+            {
+                ListenUri = webSocketUri,
+                EnableServer = true,
+                ResubscribeInterval = TimeSpan.FromMilliseconds(GlobalConfig.WebSocketResubscribeIntervalMs),
+            };
+            ApplyWebSocketEnvironmentOverrides(webSocketOptions);
+            var remoteHub = new WebSocketCommunicationModule.WebSocketCommunicationModule(webSocketOptions);
             MyHub.TryAddCommunicationModule(remoteHub);
+            MyHub.TryAddThing(new WebSocketCMThing(remoteHub), "/", "WebSocketCM");
 
             //If you don't want dynamic load things, please comment out the line below
             var loader = new DynamicThingsLoader(this);
@@ -51,6 +59,25 @@ namespace Jtext103.CFET2.CFET2App
 
             // var ExampleThing = new ExampleThing();
             // MyHub.TryAddThing(ExampleThing, "/", "ExampleThing", "./ExampleConfig.json");
+        }
+
+        private static void ApplyWebSocketEnvironmentOverrides(WebSocketCommunicationOptions options)
+        {
+            ApplyPositiveInt(
+                "CFET2_WEBSOCKET_MAX_CONCURRENT_FAN_OUT_EVENTS",
+                value => options.MaxConcurrentFanOutEvents = value);
+            ApplyPositiveInt(
+                "CFET2_WEBSOCKET_MAX_FAN_OUT_CONCURRENCY",
+                value => options.MaxFanOutConcurrency = value);
+        }
+
+        private static void ApplyPositiveInt(string name, Action<int> apply)
+        {
+            var raw = Environment.GetEnvironmentVariable(name);
+            if (int.TryParse(raw, out var value) && value > 0)
+            {
+                apply(value);
+            }
         }
     }
 }

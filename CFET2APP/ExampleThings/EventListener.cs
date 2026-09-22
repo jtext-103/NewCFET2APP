@@ -31,7 +31,7 @@ namespace Jtext103.CFET2.CFET2App.ExampleThings
             {
                 config = (ListenerConfig)initObj.TryConvertTo(typeof(ListenerConfig));        
             }
-            token=MyHub.EventHub.Subscribe(new EventFilter(config.Source, config.EventType), handler);
+            token=MyHub.Subscribe(new EventFilter(config.Source, config.EventType), handler);
         }
 
         private void handler(EventArg e)
