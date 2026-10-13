@@ -1,6 +1,7 @@
 ﻿using Jtext103.CFET2.Core;
 using Jtext103.CFET2.Core.Attributes;
 using Jtext103.CFET2.Core.Event;
+using NLog.Targets.Wrappers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -36,9 +37,10 @@ namespace Jtext103.CFET2.Things.ExampleThing
         public override void Start()
         {
             // CFET中有事件的发布订阅，用法如下
-            //subToken2 = MyHub.EventHub.Subscribe(new EventFilter(remoteSubUri, "changed"), eventHandler);
-            // MyHub.Publish("/idtest/" + channel.ToString(), EventFilter.DefaultEventType, id);
-            //SubScribe();
+            ResourceSubscription rs  = MyHub.SubscribeResource(remoteSubUri, eventHandler);
+            Console.WriteLine($"{rs.InitialValue}"); 
+            //MyHub.Publish("/idtest/" + channel.ToString(), EventFilter.DefaultEventType, id);
+            SubScribe();
         }
 
         private void eventHandler(EventArg arg)

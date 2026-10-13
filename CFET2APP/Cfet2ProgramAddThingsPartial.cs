@@ -8,6 +8,7 @@ using Jtext103.CFET2.WebSocketCommunicationModule;
 using Jtext103.CFET2.WebSocketCommunicationModule.Diagnostics;
 using Jtext103.CFET2.WebSocketCommunicationModule.Options;
 using System;
+using System.Linq;
 // using Jtext103.CFET2.Things.ExampleThing;
 
 namespace Jtext103.CFET2.CFET2App
@@ -16,6 +17,9 @@ namespace Jtext103.CFET2.CFET2App
     {
         private void AddThings()
         {
+            var communication = MyHub.ActiveEventCommunicationConfiguration;
+            communication.EnsureStandardHostSupported();
+            var wsPort = communication.GetWebSocketPort(int.Parse(GlobalConfig.Port));
             //------------------------------Pipeline------------------------------//
             MyHub.Pipeline.AddMiddleware(new ResourceInfoMidware());
             MyHub.Pipeline.AddMiddleware(new NavigationMidware());
@@ -33,13 +37,11 @@ namespace Jtext103.CFET2.CFET2App
             MyHub.TryAddThing(customView, "/", "customView", "./CustomView");
 
             //---------------------Required Event: ws-------------------------------//
-            //Console.WriteLine(GlobalConfig.IP);
-            //Console.WriteLine(GlobalConfig.IP + ":" + (int.Parse(GlobalConfig.Port) + 1));
-            Uri webSocketUri = new Uri(GlobalConfig.IP + ":" + (int.Parse(GlobalConfig.Port) + 1));
+            Uri webSocketUri = new Uri(GlobalConfig.IP + ":" + wsPort);
             var webSocketOptions = new WebSocketCommunicationOptions
             {
                 ListenUri = webSocketUri,
-                EnableServer = true,
+                EnableServer = communication.EventPublishTransports.Contains(EventTransport.WebSocket),
                 ResubscribeInterval = TimeSpan.FromMilliseconds(GlobalConfig.WebSocketResubscribeIntervalMs),
             };
             ApplyWebSocketEnvironmentOverrides(webSocketOptions);
