@@ -12,13 +12,17 @@
           "CFET2Core": "3.1.0",
           "ExampleThing": "1.0.0",
           "Jtext103.CFET2.HTTPCommunicationModule": "1.0.1",
+          "Jtext103.CFET2.MQTTCommunicationModule": "0.1.0",
           "Jtext103.CFET2.WebSocketCommunicationModule": "1.0.1",
           "MessagePack": "3.1.8",
           "Microsoft.CodeAnalysis.CSharp": "5.3.0",
           "NLog": "6.1.3",
           "Newtonsoft.Json": "13.0.4",
           "ReadLine": "2.0.1",
-          "System.CommandLine": "2.0.8"
+          "System.CommandLine": "2.0.8",
+          "HTTPCommunicationModule": "1.0.1.0",
+          "MQTTCommunicationModule": "0.1.0.0",
+          "WebSocketCommunicationModule": "1.0.1.0"
         },
         "runtime": {
           "CFET2APP.dll": {}
@@ -29,43 +33,6 @@
           "lib/net10.0/Autofac.dll": {
             "assemblyVersion": "9.1.0.0",
             "fileVersion": "9.1.0.0"
-          }
-        }
-      },
-      "CFET2Core/3.1.0": {
-        "dependencies": {
-          "NLog": "6.1.3",
-          "Newtonsoft.Json": "13.0.4"
-        },
-        "runtime": {
-          "lib/netstandard2.0/CFET2Core.dll": {
-            "assemblyVersion": "3.1.0.0",
-            "fileVersion": "3.1.0.0"
-          }
-        }
-      },
-      "Jtext103.CFET2.HTTPCommunicationModule/1.0.1": {
-        "dependencies": {
-          "CFET2Core": "3.1.0",
-          "MessagePack": "3.1.8",
-          "Newtonsoft.Json": "13.0.4"
-        },
-        "runtime": {
-          "lib/net10.0/HTTPCommunicationModule.dll": {
-            "assemblyVersion": "1.0.1.0",
-            "fileVersion": "1.0.1.0"
-          }
-        }
-      },
-      "Jtext103.CFET2.WebSocketCommunicationModule/1.0.1": {
-        "dependencies": {
-          "CFET2Core": "3.1.0",
-          "Newtonsoft.Json": "13.0.4"
-        },
-        "runtime": {
-          "lib/net10.0/WebSocketCommunicationModule.dll": {
-            "assemblyVersion": "1.0.1.0",
-            "fileVersion": "1.0.1.0"
           }
         }
       },
@@ -198,6 +165,14 @@
           }
         }
       },
+      "MQTTnet/5.2.0.1603": {
+        "runtime": {
+          "lib/net10.0/MQTTnet.dll": {
+            "assemblyVersion": "5.2.0.1603",
+            "fileVersion": "5.2.0.1603"
+          }
+        }
+      },
       "Newtonsoft.Json/13.0.4": {
         "runtime": {
           "lib/net6.0/Newtonsoft.Json.dll": {
@@ -271,6 +246,18 @@
           }
         }
       },
+      "CFET2Core/3.1.0": {
+        "dependencies": {
+          "NLog": "6.1.3",
+          "Newtonsoft.Json": "13.0.4"
+        },
+        "runtime": {
+          "CFET2Core.dll": {
+            "assemblyVersion": "3.1.0.0",
+            "fileVersion": "3.1.0.0"
+          }
+        }
+      },
       "ExampleThing/1.0.0": {
         "dependencies": {
           "CFET2Core": "3.1.0",
@@ -280,6 +267,67 @@
           "ExampleThing.dll": {
             "assemblyVersion": "1.0.0.0",
             "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "Jtext103.CFET2.HTTPCommunicationModule/1.0.1": {
+        "dependencies": {
+          "CFET2Core": "3.1.0",
+          "MessagePack": "3.1.8",
+          "Newtonsoft.Json": "13.0.4"
+        },
+        "runtime": {
+          "HTTPCommunicationModule.dll": {
+            "assemblyVersion": "1.0.1.0",
+            "fileVersion": "1.0.1.0"
+          }
+        }
+      },
+      "Jtext103.CFET2.MQTTCommunicationModule/0.1.0": {
+        "dependencies": {
+          "CFET2Core": "3.1.0",
+          "MQTTnet": "5.2.0.1603"
+        },
+        "runtime": {
+          "MQTTCommunicationModule.dll": {
+            "assemblyVersion": "0.1.0.0",
+            "fileVersion": "0.1.0.0"
+          }
+        }
+      },
+      "Jtext103.CFET2.WebSocketCommunicationModule/1.0.1": {
+        "dependencies": {
+          "CFET2Core": "3.1.0",
+          "Newtonsoft.Json": "13.0.4"
+        },
+        "runtime": {
+          "WebSocketCommunicationModule.dll": {
+            "assemblyVersion": "1.0.1.0",
+            "fileVersion": "1.0.1.0"
+          }
+        }
+      },
+      "HTTPCommunicationModule/1.0.1.0": {
+        "runtime": {
+          "HTTPCommunicationModule.dll": {
+            "assemblyVersion": "1.0.1.0",
+            "fileVersion": "1.0.1.0"
+          }
+        }
+      },
+      "MQTTCommunicationModule/0.1.0.0": {
+        "runtime": {
+          "MQTTCommunicationModule.dll": {
+            "assemblyVersion": "0.1.0.0",
+            "fileVersion": "0.1.0.0"
+          }
+        }
+      },
+      "WebSocketCommunicationModule/1.0.1.0": {
+        "runtime": {
+          "WebSocketCommunicationModule.dll": {
+            "assemblyVersion": "1.0.1.0",
+            "fileVersion": "1.0.1.0"
           }
         }
       }
@@ -297,27 +345,6 @@
       "sha512": "sha512-onT/BcnnfWcQNXiuC7R/0h8ALQzRdsAI20gpB7nfrudXpFMXdVZKz1umdtHXDwjc/bmWEsrCBAxck3+Arnk15g==",
       "path": "autofac/9.1.0",
       "hashPath": "autofac.9.1.0.nupkg.sha512"
-    },
-    "CFET2Core/3.1.0": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-yuTsjsL0qqX3ha8Q3NhHiNSfZWz5F2WvQwQI1Tab4cQftUzhrmg3+K9/oM30uQxGGxRSzQtDOMYa2bGOzTKKjw==",
-      "path": "cfet2core/3.1.0",
-      "hashPath": "cfet2core.3.1.0.nupkg.sha512"
-    },
-    "Jtext103.CFET2.HTTPCommunicationModule/1.0.1": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-myTJGuu+FO/UTJ3gOTja7zwWoXakFOJ3+7jXziKClV6yqUdjN7wpG9kZEo2s+qlOdXNf+4+sWq95OG1fu+dCYA==",
-      "path": "jtext103.cfet2.httpcommunicationmodule/1.0.1",
-      "hashPath": "jtext103.cfet2.httpcommunicationmodule.1.0.1.nupkg.sha512"
-    },
-    "Jtext103.CFET2.WebSocketCommunicationModule/1.0.1": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-d62AzEskMWDNVysm6BUhm3f4cqJaghX1CYhU+eh6+eeJUpuU4uwokfLvS2giMeiaK/j+wIciZFqSYy97+psoKA==",
-      "path": "jtext103.cfet2.websocketcommunicationmodule/1.0.1",
-      "hashPath": "jtext103.cfet2.websocketcommunicationmodule.1.0.1.nupkg.sha512"
     },
     "MessagePack/3.1.8": {
       "type": "package",
@@ -354,6 +381,13 @@
       "path": "microsoft.net.stringtools/17.11.4",
       "hashPath": "microsoft.net.stringtools.17.11.4.nupkg.sha512"
     },
+    "MQTTnet/5.2.0.1603": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-iNuWVo/568aRo2ExEN2qkC4J5b07ckKqt+9Uok2kIbbK7PMBsXvYiKVENPHmOBWFB5ExhlNQb/qQ8M9/IYRTdQ==",
+      "path": "mqttnet/5.2.0.1603",
+      "hashPath": "mqttnet.5.2.0.1603.nupkg.sha512"
+    },
     "Newtonsoft.Json/13.0.4": {
       "type": "package",
       "serviceable": true,
@@ -382,8 +416,43 @@
       "path": "system.commandline/2.0.8",
       "hashPath": "system.commandline.2.0.8.nupkg.sha512"
     },
+    "CFET2Core/3.1.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
     "ExampleThing/1.0.0": {
       "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Jtext103.CFET2.HTTPCommunicationModule/1.0.1": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Jtext103.CFET2.MQTTCommunicationModule/0.1.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Jtext103.CFET2.WebSocketCommunicationModule/1.0.1": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "HTTPCommunicationModule/1.0.1.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "MQTTCommunicationModule/0.1.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "WebSocketCommunicationModule/1.0.1.0": {
+      "type": "reference",
       "serviceable": false,
       "sha512": ""
     }
