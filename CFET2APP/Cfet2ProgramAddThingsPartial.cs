@@ -19,7 +19,6 @@ namespace Jtext103.CFET2.CFET2App
         {
             var communication = MyHub.ActiveEventCommunicationConfiguration;
             communication.EnsureStandardHostSupported();
-            var wsPort = communication.GetWebSocketPort(int.Parse(GlobalConfig.Port));
             //------------------------------Pipeline------------------------------//
             MyHub.Pipeline.AddMiddleware(new ResourceInfoMidware());
             MyHub.Pipeline.AddMiddleware(new NavigationMidware());
@@ -37,17 +36,10 @@ namespace Jtext103.CFET2.CFET2App
             MyHub.TryAddThing(customView, "/", "customView", "./CustomView");
 
             //---------------------Required Event: ws-------------------------------//
-            Uri webSocketUri = new Uri(GlobalConfig.IP + ":" + wsPort);
-            var webSocketOptions = new WebSocketCommunicationOptions
-            {
-                ListenUri = webSocketUri,
-                EnableServer = communication.EventPublishTransports.Contains(EventTransport.WebSocket),
-                ResubscribeInterval = TimeSpan.FromMilliseconds(GlobalConfig.WebSocketResubscribeIntervalMs),
-            };
+            var webSocketOptions = EventCommunicationBootstrap.CreateWebSocketOptions(communication,
+                GlobalConfig.IP, int.Parse(GlobalConfig.Port), TimeSpan.FromMilliseconds(GlobalConfig.WebSocketResubscribeIntervalMs));
             ApplyWebSocketEnvironmentOverrides(webSocketOptions);
-            var remoteHub = new WebSocketCommunicationModule.WebSocketCommunicationModule(webSocketOptions);
-            MyHub.TryAddCommunicationModule(remoteHub);
-            MyHub.TryAddThing(new WebSocketCMThing(remoteHub), "/", "WebSocketCM");
+            EventCommunicationBootstrap.Register(MyHub, webSocketOptions);
 
             //If you don't want dynamic load things, please comment out the line below
             var loader = new DynamicThingsLoader(this);

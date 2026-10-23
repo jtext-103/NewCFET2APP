@@ -24,9 +24,10 @@
 	</ItemGroup>
 	
   <ItemGroup>
-    <PackageReference Include="CFET2Core" Version="3.1.0" />
-    <PackageReference Include="Jtext103.CFET2.HTTPCommunicationModule" Version="1.0.1" />
-    <PackageReference Include="Jtext103.CFET2.WebSocketCommunicationModule" Version="1.0.1" />
+    <PackageReference Include="CFET2Core" Version="3.2.0" />
+    <PackageReference Include="Jtext103.CFET2.HTTPCommunicationModule" Version="1.0.2" />
+    <PackageReference Include="Jtext103.CFET2.WebSocketCommunicationModule" Version="1.1.0" />
+    <PackageReference Include="Jtext103.CFET2.MQTTCommunicationModule" Version="1.0.0" />
     <ProjectReference Include="..\ExampleThing\ExampleThing.csproj" />
   </ItemGroup>
 

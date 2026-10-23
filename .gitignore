@@ -13,6 +13,15 @@ Log_*.txt
 views/
 obj/
 
+# Test project build outputs
+CFET2APP.Tests/bin/
+CFET2APP.Tests/TestResults/
+CFET2APP.TestFixtures/bin/
+
 # Local review notes
 DOCUMENT_REVIEW_CHECKLIST.md
 NUGET_RELEASE_REVIEW.md
+
+# Generated build outputs
+bin/
+TestResults/

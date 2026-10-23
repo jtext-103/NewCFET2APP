@@ -14,7 +14,7 @@
 
 本文档整理当前 `newcfet2app` 相比旧版 `jtext103_cfet2app` 的主要升级内容，包括运行框架、通信模块、控制台交互、动态 DLL 加载、NuGet 依赖和跨平台能力等方面。
 
-当前已移除跨仓库源码项目引用，恢复为固定版本 NuGet 引用，等待按 Core → HTTP/WebSocket → APP 顺序逐个发布并更新依赖。Core 引用为 3.1.0，HTTP/WebSocket 引用均已升级为已发布的 NuGet 1.0.1。详见 [提交与依赖交付说明](提交与依赖交付说明.md)。
+当前已移除跨仓库源码项目引用，使用已发布的固定版本 NuGet 包：Core 3.2.0、HTTP 1.0.2、WebSocket 1.1.0、MQTT 1.0.0。ExampleThing 同步引用 Core 3.2.0。APP 不配置 CI、不发布 NuGet，在本地构建、测试并生成运行产物。
 
 ## 2. 升级内容概览
 

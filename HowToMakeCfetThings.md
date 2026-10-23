@@ -168,7 +168,7 @@ HTTP 模块会将 `GET` 映射为 `get`、`POST` 映射为 `set`、`PUT` 映射�
 
 | 资源声明 | 谁发布变化事件 | Thing 需要做什么 |
 | --- | --- | --- |
-| Status/Config 未标记 `[Cfet2Event]` | 建立资源订阅后，Core 周期读取并在值变化时自动发布 `changed` | 提供可读取的标量值，无需调用 Publish |
+| Status/Config 未标记 `[Cfet2Event]` | 建立资源订阅后，Core 周期读取并在值变化时自动发布 `changed` | 提供可读取的受支持标量或容器，getter 必须无参数，无需调用 Publish |
 | Status/Config 标记 `[Cfet2Event]` | Thing 在数据更新处主动发布 | 更新值后调用 `MyHub.PublishResource(GetPathFor(nameof(资源成员)), value)` |
 
 `[Cfet2Event]` 只是原生事件能力标识。它不会自动监听属性赋值，也不会自动插入 Publish；标记后 Core 不再轮询该资源。如果希望写入 Config 或采集到新值时立即发布，应在 setter 或采集回调中显式发布。
@@ -212,11 +212,11 @@ meter.UpdateTarget(42);
 // subscription.Dispose();
 ```
 
-此处路径为 `/device/meter/target`。Core 先读取当前值作为 `InitialValue`，之后默认每 500 ms 观测一次，以 `object.Equals` 判断值是否变化。同一资源的多个订阅共享观测任务；最后一个订阅释放后停止观测。只有声明资源而没有资源订阅时，不会自动启动观测。
+此处路径为 `/device/meter/target`。Core 先读取当前值作为 `InitialValue`，之后默认每 500 ms 观测一次，标量以相等性比较、受支持容器以独立快照内容比较判断变化。资源订阅、独立观察句柄和 AutoObserveList 常驻观察共享任务；最后一个观察需求释放后停止观测。仅声明资源不会启动观测，AutoObserveList 或独立观察句柄可在没有资源订阅时启动观测。
 
-APP 可在启动目录的 `GlobalConfig.json` 中设置 `ResourceObservationIntervalMs`，正整数生效，缺失或非法时使用 500 ms。配置须在创建 Hub 前加载，修改后重启。轮询可能漏掉两次采样之间的短暂变化，浮点值没有容差或死区。
+APP 可在启动目录的 `GlobalConfig.json` 中设置 `ResourceObservationIntervalMs`，正整数生效，缺失或非法时使用 500 ms。配置须在创建 Hub 前加载，修改后重启。轮询可能漏掉两次采样之间的短暂变化。数值标量支持 ResourceMinDelta 和 ResourceMinDeltaOverrides，默认阈值 0；浮点边界不加 epsilon，容器仍按内容比较。
 
-自动观测支持数值、`bool`、`char`、`string`、枚举、`DateTime`、`DateTimeOffset`、`TimeSpan`、`Guid`，以及这些值类型的 `Nullable<T>`。`Status<T>`、`Config<T>`、`SampleBase<T>` 及其派生类按 `T` 判断。数组、集合、自定义类/结构体、声明为 `object` 或非泛型 `ISample` 的资源不能自动观测，订阅时抛出 `WrongResourceActionException`；普通 Get/Set 不受影响。Method 不支持资源订阅，未标记资源仅支持 `changed` 事件。
+自动观测支持数值、`bool`、`char`、`string`、枚举、`DateTime`、`DateTimeOffset`、`TimeSpan`、`Guid`，以及这些值类型的 `Nullable<T>`。`Status<T>`、`Config<T>`、`SampleBase<T>` 及其派生类按 `T` 判断。数组、精确 `List<T>` 和 `Dictionary<TKey, TValue>` 也支持自动观测，元素及字典值递归受支持，字典键限标量。自定义类/结构体、容器子类、接口和其他集合、object 或非泛型 ISample 声明仍不支持。无参数未标记资源在精确订阅时遇到不支持类型会抛 WrongResourceActionException；普通 Get/Set 不受影响。所有含参数 getter（含默认参数和 params）都不轮询，但精确 SubscribeResource 可按地址读取一次初值并接收主动事件。Method 不支持资源订阅；无参数未标记资源的精确资源订阅仅支持 changed。
 
 ### 方式二：在值更新时主动发布，使用 nameof 定位资源
 
@@ -282,7 +282,7 @@ public void WriteSetPoint(int value)
 
 `GetPathFor(nameof(WriteSetPoint))` 会解析为当前 Thing 路径下的 `setPoint`，而不是 `WriteSetPoint`。分开的 Config 方法必须把 `[Cfet2Event]` 放在 Set 实现上；只标记 Get 实现会在资源探测时被拒绝。属性形式则直接标记可读写的 Config 属性。
 
-上例自行跳过相同值，表示“变化时发布”；`PublishResource` 本身不会去重。复杂对象也可走原生事件，但应发布稳定快照，不要在发布后继续原地修改同一实例。没有原生标记的资源若又手动发布，可能与自动观测产生重复通知，应按上表选择一种方式。
+上例自行跳过相同值，表示“变化时发布”；`PublishResource` 本身不会去重。对受支持标量或容器，可在 Thing 中调用 `PublishResourceIfChanged(nameof(资源成员), value)` 使用独立快照、变化比较和 minDelta；首次调用发布，返回 true 仅表示 Core 接受入队。带参数资源可通过 parameters 参数提供事件路径参数。直接 PublishResource 不使用阈值，也不更新该辅助函数基准。详见 [minDelta 使用示例](../newcfet2core/Code/CFET2Core/doc/主动变化发布/minDelta使用示例.md)。复杂对象也可走原生事件，但应发布稳定快照，不要在发布后继续原地修改同一实例。没有原生标记的资源若又手动发布，可能与自动观测产生重复通知，应按上表选择一种方式。
 
 ### 订阅、初始值与取消
 

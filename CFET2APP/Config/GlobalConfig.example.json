@@ -1,0 +1,17 @@
+{
+  "IP": "http://127.0.0.1",
+  "Port": "8000",
+  "Accept": "Json",
+  "EventPublishTransports": ["WebSocket"],
+  "HttpEventSubscriptionTransport": "WebSocket",
+  "WebSocketPortOffset": 1,
+  "MqttBrokerHost": "localhost",
+  "MqttBrokerPort": 1883,
+  "MqttClientId": null,
+  "MqttSourceHttpBaseUri": null,
+  "MqttKeepAliveSeconds": 30,
+  "MqttDemandRenewIntervalSeconds": 300,
+  "MqttResourceLeaseTimeoutSeconds": 600,
+  "MqttLeaseScanIntervalSeconds": 1,
+  "MqttOperationTimeoutSeconds": 10
+}

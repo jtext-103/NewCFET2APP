@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.5.1" />
+    <PackageReference Include="MSTest.TestAdapter" Version="4.2.3" />
+    <PackageReference Include="MSTest.TestFramework" Version="4.2.3" />
+    <ProjectReference Include="..\CFET2APP\CFET2APP.csproj" />
+    <ProjectReference Include="..\CFET2APP.TestFixtures\CFET2APP.TestFixtures.csproj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+  <!-- Resolve actual outputs rather than assuming bin/Configuration/framework paths. -->
+  <Target Name="CopyStandardHostTestAssets" AfterTargets="Build">
+    <MSBuild Projects="../CFET2APP/CFET2APP.csproj" Targets="GetTargetPath" Properties="Configuration=$(Configuration);TargetFramework=$(TargetFramework)">
+      <Output TaskParameter="TargetOutputs" ItemName="_StandardAppTarget" />
+    </MSBuild>
+    <MSBuild Projects="../CFET2APP.TestFixtures/CFET2APP.TestFixtures.csproj" Targets="GetTargetPath" Properties="Configuration=$(Configuration);TargetFramework=$(TargetFramework)">
+      <Output TaskParameter="TargetOutputs" ItemName="_StandardFixtureTarget" />
+    </MSBuild>
+    <PropertyGroup>
+      <_StandardAppDirectory>@(_StandardAppTarget->'%(RootDir)%(Directory)')</_StandardAppDirectory>
+    </PropertyGroup>
+    <ItemGroup>
+      <_StandardAppFiles Include="$(_StandardAppDirectory)*.dll;$(_StandardAppDirectory)*.json" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_StandardAppFiles)" DestinationFolder="$(TargetDir)StandardHost" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(_StandardFixtureTarget)" DestinationFolder="$(TargetDir)HostFixture" SkipUnchangedFiles="true" />
+  </Target>
+</Project>

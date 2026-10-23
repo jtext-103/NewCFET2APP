@@ -8,11 +8,26 @@ CFET2 的宿主应用与交互式命令行。它初始化 `CFET2Host`、挂载 T
 - 提供 `get`、`set`、`invoke`、`list`、`goto`、`exit` 等命令及交互式补全。
 - 使用 Autofac 装配应用；NLog 负责 CFET 日志，`appsettings.json` 的 `Logging` 节配置 ASP.NET Core 服务日志。
 - 包含 `ExampleThing`，可作为 Thing 开发和动态加载的参考。
-- 支持加载 HTTP 与 WebSocket 通信模块。
+- 支持加载 HTTP、WebSocket 与 MQTT 通信模块。
 
 ## 快速开始
 
 需要 Visual Studio 2026 及 .NET 10 开发环境。
+
+### 依赖与本地验证
+
+APP 固定引用 Core 3.2.0、HTTP 1.0.2、WebSocket 1.1.0 和 MQTT 1.0.0 NuGet 包；ExampleThing 使用相同 Core 版本。只需检出本仓库，无需同级模块源码。APP 不配置 CI，不发布 NuGet。
+
+```powershell
+dotnet restore CFET2APP.sln
+dotnet build CFET2APP.sln -c Release --no-restore
+$env:CFET_MQTT_INTEGRATION = '1'
+$env:CFET_MOSQUITTO_EXE = '<本机 mosquitto.exe 的完整路径>'
+dotnet test CFET2APP.Tests/CFET2APP.Tests.csproj -c Release --no-build
+dotnet publish CFET2APP/CFET2APP.csproj -c Release -o artifacts/app
+```
+
+未设置集成测试开关或缺少 Broker 时，相关用例明确跳过，不能算作集成验证通过。运行产物还需按下文准备运行配置。
 
 ### 开发启动
 
@@ -56,9 +71,18 @@ cd .\CFET2APP\bin\Debug\net10.0
 
 - `IP` 和 `Port` 共同构成 HTTP 服务地址。
 - `Accept` 会传给 HTTP 通信模块，决定其接受的数据格式。
-- WebSocket 通信模块使用 `IP` 与 `Port + 1` 建立服务地址。
+- WebSocket 通信模块使用 IP 与 `Port + WebSocketPortOffset` 建立服务地址，偏移默认 1，须为正整数且结果端口不超过 65535。HTTP 事件订阅传输由 HttpEventSubscriptionTransport 选择，默认 WebSocket；EventPublishTransports 默认仅 WebSocket。支持 MQTT 发布及订阅，配置方式见 [事件通信配置](CFET2APP/Config/README.md)。
 - `LogRetentionDays` 控制按日期生成的日志文件保留天数；未提供、为空或非法时默认保留 7 天，设为 `0` 时不启动日志清理任务。
-- `ResourceObservationIntervalMs` 设置未标记 `[Cfet2Event]` 的标量资源自动观测周期（毫秒）。正整数生效；未提供、为空、非整数或不大于 0 时使用默认 500 ms。启动时先加载配置，再创建 Hub；修改配置后需重启，不支持自动热更新。
+- `ResourceObservationIntervalMs` 设置符合资格的未标记 `[Cfet2Event]` 标量和容器资源自动观测周期（毫秒）。正整数生效；未提供、为空、非整数或不大于 0 时使用默认 500 ms。启动时先加载配置，再创建 Hub；修改配置后需重启，不支持自动热更新。
+
+### 已实现的观察与发布配置
+
+- AutoObserveList / AutoDenyList 支持 Path 或 Regex 规则；前者在全部 Thing.Start 成功后建立常驻观察，后者禁止自动轮询，两者都不屏蔽主动事件。常驻观察与资源订阅、独立句柄共享任务，最后一个观察需求释放后才停止。
+- 数组、精确 `List<T>`、`Dictionary<TKey, TValue>` 支持独立快照内容比较，元素及字典值递归受支持；字典键限标量。所有含参数 getter（包括默认参数和 params）都不轮询。
+- ResourceMinDelta 默认 0，ResourceMinDeltaOverrides 按本地基础资源路径覆盖；阈值仅作用于数值标量，容器仍按内容比较。自动观察和 Thing.PublishResourceIfChanged 共用阈值配置，直接 Publish/PublishResource 不使用阈值。
+- ResourceSlowGetThresholdMs 默认 100 ms，用于 Core 观察读取的慢 Get 报警，不强制中止 getter。
+
+这些配置在创建 Core 前加载，修改后重启生效；字段校验见 [Core 当前说明](../newcfet2core/README.md)。当前引用的 Core 3.2.0 包包含这些功能。
 
 ### WebSocket 重订阅与并发配置
 
@@ -133,8 +157,6 @@ thingConfig/
 
 - [如何做一个 CFET Thing](HowToMakeCfetThings.md) 提供 Thing 开发参考。
 ## 文档
-
-- [提交与依赖交付说明](Doc/提交与依赖交付说明.md)
 
 - [新命令行交互功能](<Doc/newcfet2app 新命令行交互功能.md>)
 - [升级内容](<Doc/newcet2app 升级内容.md>)
