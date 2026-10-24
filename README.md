@@ -33,7 +33,7 @@ dotnet publish CFET2APP/CFET2APP.csproj -c Release -o artifacts/app
 
 1. 使用 Visual Studio 2026 打开 `CFET2APP.sln`。
 2. 将 `CFET2APP` 设为启动项目。
-3. 确认启动工作目录中已准备 `GlobalConfig.json`、`thingConfig` 和按需提供的 `thingDll`。
+3. 确认启动工作目录中已准备 `GlobalConfig.json`、`CustomView/CustomViewConfig.json`、`thingConfig` 和按需提供的 `thingDll`。CustomView 最小配置为 `{"RegularMatches":{}}`，空 `thingConfig` 目录也应保留。
 4. 使用 F5 启动并调试。
 
 ### 无交互启动
@@ -161,3 +161,17 @@ thingConfig/
 - [新命令行交互功能](<Doc/newcfet2app 新命令行交互功能.md>)
 - [升级内容](<Doc/newcet2app 升级内容.md>)
 - [历史 README](<Expired/README.NET6编译说明.md>)
+
+## 测试范围与记录（2026-10-23）
+
+`CFET2APP.Tests` 包含宿主配置测试和 `StandardHostIntegration` 真实标准宿主测试；后者使用独立 Mosquitto、临时配置和经动态加载器挂载的 `CFET2APP.TestFixtures/StandardHostDevice`。测试项目显式构建 APP 和测试设备；无需同级通信模块源码。
+
+从本仓库目录仅检查宿主配置可运行：
+
+```powershell
+dotnet test CFET2APP.Tests/CFET2APP.Tests.csproj -c Release --filter 'TestCategory=HostConfiguration'
+```
+
+真实网络测试按上文设置 `CFET_MQTT_INTEGRATION=1` 和 `CFET_MOSQUITTO_EXE` 后运行完整测试项目；可用 `--filter 'TestCategory=StandardHostIntegration'` 单独选择标准宿主集成。测试自行管理独立 Broker，无需预先启动共享 Broker。
+
+旧 MQTT 文档中的标准宿主结果属于迁移前记录。当前测试入口已经迁入本仓库，后续验收应分别记录 APP 和模块测试的通过、失败、跳过以及所用包版本；本次文档同步未重跑测试，不新增通过数量。
