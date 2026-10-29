@@ -64,6 +64,10 @@ public sealed class MQTTStandardHostIntegrationTests
                 try { if (ev.Sample.GetVal<int>() == 4242) { Assert.IsTrue(ev.Sample.IsRemote); deliveries.Enqueue(label); } }
                 catch (Exception ex) { callbackErrors.Enqueue(ex); }
             }
+            using var skipped = host.MyHub.SubscribeResource(source.Origin + "/device/Quiet", _ => Assert.Fail("NoEvent callback"));
+            Assert.AreEqual(ResourceSubscriptionStatus.Skipped, skipped.Status);
+            Assert.IsNull(skipped.InitialValue);
+            Assert.AreEqual(1, (await source.Read("/device/QuietReads", ct)).Value<int>());
             using var byHttp = host.MyHub.SubscribeResource(source.Origin + "/device/Value", ev => Receive("http", ev));
             Assert.AreEqual(1, byHttp.InitialValue.GetVal<int>());
             using var byMqtt = host.MyHub.Subscribe(new EventFilter("/device/Value", "changed", 0, source.Origin.Replace("http://", "mqtt://")), ev => Receive("mqtt", ev));
@@ -72,7 +76,7 @@ public sealed class MQTTStandardHostIntegrationTests
             host.MyHub.StartCommunication(); host.MyHub.StartThings();
             IReadOnlyList<MQTTSubscriptionStatus> MqttSubscriptions() => (IReadOnlyList<MQTTSubscriptionStatus>)host.MyHub.TryGetResourceSampleWithUri("/MQTTTCM/subscriptions").ObjectVal;
             IReadOnlyList<WebSocketRemoteClientStatus> WsClients() => (IReadOnlyList<WebSocketRemoteClientStatus>)host.MyHub.TryGetResourceSampleWithUri("/WebSocketCM/remoteClients").ObjectVal;
-            var mqttCount = selected == EventTransport.Mqtt ? 2 : 1; var wsCount = dual ? 1 : 0; // Identical rules share one subscription on the source WS server.
+            var mqttCount = selected == EventTransport.Mqtt ? 2 : 1; var wsCount = dual ? (selected == EventTransport.WebSocket ? 2 : 1) : 0; // Resource and ordinary event subscriptions have separate WS groups.
             await Wait(() => MqttSubscriptions().Count == mqttCount && MqttSubscriptions().All(s => s.Rules.All(r => r.State == MQTTSubscriptionRuleState.Ready)) &&
                 WsClients().Sum(c => c.ActiveSubscriptionCount) == wsCount, ct);
             var before = (MQTTModuleStatus)host.MyHub.TryGetResourceSampleWithUri("/MQTTTCM/status").ObjectVal;

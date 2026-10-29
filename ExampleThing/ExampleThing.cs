@@ -38,7 +38,8 @@ namespace Jtext103.CFET2.Things.ExampleThing
         {
             // CFET中有事件的发布订阅，用法如下
             ResourceSubscription rs  = MyHub.SubscribeResource(remoteSubUri, eventHandler);
-            Console.WriteLine($"{rs.InitialValue}"); 
+            if (rs.Status == ResourceSubscriptionStatus.Created) Console.WriteLine($"{rs.InitialValue}");
+            else Console.WriteLine($"Subscription skipped: {rs.Reason}");
             //MyHub.Publish("/idtest/" + channel.ToString(), EventFilter.DefaultEventType, id);
             SubScribe();
         }

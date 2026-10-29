@@ -1,5 +1,12 @@
 # CFET2 App
 
+## Cfet2NoEvent
+
+使用正式 NuGet 包：Core `3.3.0`、HTTP `1.1.3`、WebSocket `1.2.2`、MQTT `1.1.2`。这些版本支持 Cfet2NoEvent；直接从 nuget.org 恢复，无需本地 feed。
+
+资源可使用 `[Cfet2Status, Cfet2NoEvent]` 或 `[Cfet2Config, Cfet2NoEvent]`。消费 `SubscribeResource` 结果时先检查 `Status`，`Skipped` 的 `InitialValue` 为 null，Token 可安全释放。与 `Cfet2Event` 同时标记会在注册时失败。
+
+
 CFET2 的宿主应用与交互式命令行。它初始化 `CFET2Host`、挂载 Thing 和通信模块，并提供资源浏览与调用 CLI。
 
 ## 功能
@@ -16,7 +23,7 @@ CFET2 的宿主应用与交互式命令行。它初始化 `CFET2Host`、挂载 T
 
 ### 依赖与本地验证
 
-APP 固定引用 Core 3.2.0、HTTP 1.0.2、WebSocket 1.1.0 和 MQTT 1.0.0 NuGet 包；ExampleThing 使用相同 Core 版本。只需检出本仓库，无需同级模块源码。APP 不配置 CI，不发布 NuGet。
+APP 固定引用 Core 3.3.0、HTTP 1.1.3、WebSocket 1.2.2 和 MQTT 1.1.2 NuGet 包；ExampleThing 使用相同 Core 版本。只需检出本仓库，无需同级模块源码。APP 不配置 CI，不发布 NuGet。
 
 ```powershell
 dotnet restore CFET2APP.sln
@@ -82,7 +89,7 @@ cd .\CFET2APP\bin\Debug\net10.0
 - ResourceMinDelta 默认 0，ResourceMinDeltaOverrides 按本地基础资源路径覆盖；阈值仅作用于数值标量，容器仍按内容比较。自动观察和 Thing.PublishResourceIfChanged 共用阈值配置，直接 Publish/PublishResource 不使用阈值。
 - ResourceSlowGetThresholdMs 默认 100 ms，用于 Core 观察读取的慢 Get 报警，不强制中止 getter。
 
-这些配置在创建 Core 前加载，修改后重启生效；字段校验见 [Core 当前说明](../newcfet2core/README.md)。当前引用的 Core 3.2.0 包包含这些功能。
+这些配置在创建 Core 前加载，修改后重启生效；字段校验见 [Core 当前说明](../newcfet2core/README.md)。当前引用的 Core 3.3.0 包包含这些功能。
 
 ### WebSocket 重订阅与并发配置
 
