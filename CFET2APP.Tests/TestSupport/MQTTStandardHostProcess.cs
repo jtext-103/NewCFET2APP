@@ -40,7 +40,7 @@ internal sealed class MQTTStandardHostProcess : IAsyncDisposable
     {
         while (!Volatile.Read(ref booted)) { await CheckRunning(); await Task.Delay(20, ct); }
     }
-    public static async Task<MQTTStandardHostProcess> Start(int brokerPort, bool publishMqtt, bool publishWs, bool invalid = false, int? wsOffset = null)
+    public static async Task<MQTTStandardHostProcess> Start(int brokerPort, bool publishMqtt, bool publishWs, bool invalid = false, int? wsOffset = null, Action<JObject>? configure = null)
     {
         var directory = Path.Combine(Path.GetTempPath(), "cfet-mqtt-standard-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(directory); Directory.CreateDirectory(Path.Combine(directory, "thingConfig", "device"));
@@ -60,6 +60,7 @@ internal sealed class MQTTStandardHostProcess : IAsyncDisposable
         var config = new JObject { ["IP"] = "http://127.0.0.1", ["Port"] = port.ToString(), ["Accept"] = "Json",
             ["EventPublishTransports"] = transports, ["HttpEventSubscriptionTransport"] = "Mqtt", ["WebSocketPortOffset"] = offset,
             ["MqttBrokerHost"] = "127.0.0.1", ["MqttBrokerPort"] = invalid ? 0 : brokerPort, ["MqttOperationTimeoutSeconds"] = 1 };
+        configure?.Invoke(config);
         await File.WriteAllTextAsync(Path.Combine(directory, "GlobalConfig.json"), config.ToString());
         var start = new ProcessStartInfo("dotnet") { WorkingDirectory = directory, UseShellExecute = false,
             CreateNoWindow = true, WindowStyle = ProcessWindowStyle.Hidden, RedirectStandardOutput = true, RedirectStandardError = true };

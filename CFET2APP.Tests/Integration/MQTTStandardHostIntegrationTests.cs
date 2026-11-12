@@ -54,6 +54,10 @@ public sealed class MQTTStandardHostIntegrationTests
             var config = new Dictionary<string, string> { ["IP"] = "http://127.0.0.1", ["Port"] = receiverPort.ToString(), ["Accept"] = "Json",
                 ["HttpEventSubscriptionTransport"] = selected.ToString(), ["WebSocketPortOffset"] = source.WebSocketOffset.ToString(),
                 ["MqttBrokerHost"] = "127.0.0.1", ["MqttBrokerPort"] = broker.Port.ToString() };
+            // This receiver also subscribes to an explicit mqtt:// address.
+            // When HTTP subscriptions use WS, opt in via MQTT publishing.
+            if (selected == EventTransport.WebSocket)
+                config["EventPublishTransports"] = "[\"WebSocket\",\"Mqtt\"]";
             GlobalConfig.Set(config); HubMaster.InjectHubToModule(host); mounted = true;
             host.MyHub.TryAddCommunicationModule(http);
             EventCommunicationBootstrap.Register(host.MyHub, new WebSocketCommunicationOptions
@@ -80,7 +84,7 @@ public sealed class MQTTStandardHostIntegrationTests
             await Wait(() => MqttSubscriptions().Count == mqttCount && MqttSubscriptions().All(s => s.Rules.All(r => r.State == MQTTSubscriptionRuleState.Ready)) &&
                 WsClients().Sum(c => c.ActiveSubscriptionCount) == wsCount, ct);
             var before = (MQTTModuleStatus)host.MyHub.TryGetResourceSampleWithUri("/MQTTTCM/status").ObjectVal;
-            Assert.IsFalse(before.PublishLocalEvents);
+            Assert.AreEqual(selected == EventTransport.WebSocket, before.PublishLocalEvents);
             await source.Publish(4242, ct);
             await Wait(() => !callbackErrors.IsEmpty || deliveries.Count >= (dual ? 3 : 2), ct);
             Assert.IsTrue(callbackErrors.IsEmpty, string.Join(Environment.NewLine, callbackErrors));

@@ -43,13 +43,22 @@ namespace Jtext103.CFET2.CFET2App
         }
         internal static void Register(Hub hub, WebSocketCommunicationOptions wsOptions)
         {
-            var mqtt = new MqttModule(CreateMqttOptions(hub.ActiveEventCommunicationConfiguration));
+            var configuration = hub.ActiveEventCommunicationConfiguration;
+            configuration.EnsureStandardHostSupported();
+            var ws = new WsModule(wsOptions);
+            hub.TryAddCommunicationModule(ws);
+            hub.TryAddThing(new WebSocketCMThing(ws), "/", "WebSocketCM");
+
+            // Broker settings alone do not opt in to MQTT. Avoid even constructing
+            // the module unless publishing or HTTP event subscription uses it.
+            if (!configuration.EventPublishTransports.Contains(EventTransport.Mqtt)
+                && configuration.HttpEventSubscriptionTransport != EventTransport.Mqtt)
+                return;
+
+            var mqtt = new MqttModule(CreateMqttOptions(configuration));
             var owned = false;
             try
             {
-                var ws = new WsModule(wsOptions);
-                hub.TryAddCommunicationModule(ws);
-                hub.TryAddThing(new WebSocketCMThing(ws), "/", "WebSocketCM");
                 hub.TryAddCommunicationModule(mqtt); owned = true;
                 hub.TryAddThing(new MQTTTCMThing(mqtt), "/", "MQTTTCM");
             }

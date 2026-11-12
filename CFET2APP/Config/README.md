@@ -19,15 +19,15 @@ dotnet '<构建目录>/CFET2APP.dll'
 | WS/MQTT 双发布，HTTP 订阅走 MQTT | `["WebSocket","Mqtt"]` | `"Mqtt"` |
 | WS 发布，MQTT 仅订阅 | `["WebSocket"]` | `"Mqtt"` |
 
-标准宿主始终注册 WS/MQTT 两个事件模块以保留显式协议订阅。即使使用默认 WS 配置，MQTT 也会连接 Broker，默认是 localhost:1883；没有本地 Broker 时可从诊断查看恢复状态。发布集合控制来源发布能力，不是连接启用开关。
+未配置事件协议时，默认只使用 WebSocket，不创建 MQTT 模块、不挂载 `/MQTTTCM`、不连接 Broker。只有 `EventPublishTransports` 包含 `Mqtt`，或 `HttpEventSubscriptionTransport` 为 `Mqtt` 时，才创建并启动 MQTT 模块。仅填写 `MqttBrokerHost`、`MqttBrokerPort` 等连接参数不会启用 MQTT。不需要额外的启用/关闭开关；将发布与订阅都设为 WebSocket 并重启即可关闭 MQTT。
 
 MQTT 首版配置为 TCP，不包含 TLS 或凭据。MqttBrokerHost 不含协议或端口；端口单独使用整数 MqttBrokerPort。来源默认继承本次配置的应用 HTTP 基地址；需要公开地址与监听地址不同时，显式设置 MqttSourceHttpBaseUri，并确保订阅端使用相同来源 authority。来源不是 Broker 地址。
 
 MqttClientId 为 null 或缺失时由模块生成；重连沿用。显式 ClientId 应由不同运行实例分别配置，避免 Broker 将相同 ClientId 的旧连接踢下线。
 
-HTTP 资源初读仍使用 HTTP，HTTP 事件订阅按 HttpEventSubscriptionTransport 选择单一模块。显式 ws/mqtt 订阅独立保留；直接 mqtt 地址不提供资源 Get。双发布不跨协议去重。
+HTTP 资源初读仍使用 HTTP，HTTP 事件订阅按 HttpEventSubscriptionTransport 选择单一模块。显式 mqtt 地址订阅需要先通过上述协议配置启用 MQTT 模块，不会按地址自动启动 MQTT；直接 mqtt 地址不提供资源 Get。显式 ws 订阅仍可用。双发布不跨协议去重。
 
-运行后通过 HTTP GET 或 CLI 的已有资源读取方式查看：
+启用 MQTT 后，通过 HTTP GET 或 CLI 的已有资源读取方式查看（默认 WebSocket 模式没有以下资源）：
 
 - `/MQTTTCM/status`、`/MQTTTCM/printStatus`：模块、连接、队列及组件状态。
 - `/MQTTTCM/subscriptions`、`/MQTTTCM/printSubscriptions`：当前业务订阅规则与需求发送诊断。

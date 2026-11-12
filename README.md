@@ -15,7 +15,7 @@ CFET2 的宿主应用与交互式命令行。它初始化 `CFET2Host`、挂载 T
 - 提供 `get`、`set`、`invoke`、`list`、`goto`、`exit` 等命令及交互式补全。
 - 使用 Autofac 装配应用；NLog 负责 CFET 日志，`appsettings.json` 的 `Logging` 节配置 ASP.NET Core 服务日志。
 - 包含 `ExampleThing`，可作为 Thing 开发和动态加载的参考。
-- 支持加载 HTTP、WebSocket 与 MQTT 通信模块。
+- 默认加载 HTTP、WebSocket；只有事件发布或 HTTP 事件订阅明确选择 `Mqtt` 才加载 MQTT 模块并连接 Broker。省略 MQTT 配置时不会启动 MQTT。
 
 ## 快速开始
 
